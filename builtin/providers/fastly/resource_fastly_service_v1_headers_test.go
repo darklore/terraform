@@ -12,6 +12,44 @@ import (
 	gofastly "github.com/sethvargo/go-fastly"
 )
 
+func TestFastlyServiceV1_BuildHeaders(t *testing.T) {
+	cases := []struct {
+		remote *gofastly.CreateHeaderInput
+		local  map[string]interface{}
+	}{
+		{
+			remote: &gofastly.CreateHeaderInput{
+				Name:   "someheadder",
+				Action: gofastly.HeaderActionDelete,
+			},
+			local: map[string]interface{}{
+				"name":   "someheadder",
+				"action": "delete",
+			},
+		},
+		// {
+		// 	remote: []*gofastly.CreateHeaderInput{
+		// 		&gofastly.CreateHeaderInput{
+		// 			Name: "test.notexample.com",
+		// 		},
+		// 	},
+		// 	local: []map[string]interface{}{
+		// 		map[string]interface{}{
+		// 			"name":    "test.notexample.com",
+		// 			"comment": "",
+		// 		},
+		// 	},
+		// },
+	}
+
+	for _, c := range cases {
+		out, _ := buildHeader(c.local)
+		if !reflect.DeepEqual(out, c.remote) {
+			t.Fatalf("Error matching:\nexpected: %#v\ngot: %#v", c.remote, out)
+		}
+	}
+}
+
 func TestAccFastlyServiceV1_headers_basic(t *testing.T) {
 	var service gofastly.ServiceDetail
 	name := fmt.Sprintf("tf-test-%s", acctest.RandString(10))
