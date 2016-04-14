@@ -2,11 +2,57 @@ package terraform
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/config"
+	"github.com/hashicorp/terraform/config/module"
 	"github.com/mitchellh/mapstructure"
 )
+
+type EvalTypeCheckVariable struct {
+	Variables  map[string]string
+	ModulePath []string
+	ModuleTree *module.Tree
+	DepPrefix  string
+}
+
+func (n *EvalTypeCheckVariable) Eval(ctx EvalContext) (interface{}, error) {
+	currentTree := n.ModuleTree
+	for _, pathComponent := range n.ModulePath[1:] {
+		currentTree = currentTree.Children()[pathComponent]
+	}
+	targetConfig := currentTree.Config()
+
+	prototypes := make(map[string]config.VariableType)
+	for _, variable := range targetConfig.Variables {
+		prototypes[variable.Name] = variable.Type()
+	}
+
+	for name, declaredType := range prototypes {
+		// This is only necessary when we _actually_ check
+		// proposedValue := n.Variables[name]
+
+		switch declaredType {
+		case config.VariableTypeString:
+			// This will need actual verification once we aren't dealing with
+			// a map[string]string but this is sufficient for now.
+			continue
+		default:
+			// Only display a module if we are not in the root module
+			modulePathDescription := fmt.Sprintf(" in module %s", strings.Join(n.ModulePath[1:], "."))
+			if len(n.ModulePath) == 1 {
+				modulePathDescription = ""
+			}
+			// This will need the actual type substituting when we have more than
+			// just strings and maps.
+			return nil, fmt.Errorf("variable %s%s should be type %s, got type string",
+				name, modulePathDescription, declaredType.Printable())
+		}
+	}
+
+	return nil, nil
+}
 
 // EvalSetVariables is an EvalNode implementation that sets the variables
 // explicitly for interpolation later.
