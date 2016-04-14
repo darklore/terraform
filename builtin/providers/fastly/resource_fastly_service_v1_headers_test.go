@@ -19,27 +19,52 @@ func TestFastlyServiceV1_BuildHeaders(t *testing.T) {
 	}{
 		{
 			remote: &gofastly.CreateHeaderInput{
-				Name:   "someheadder",
-				Action: gofastly.HeaderActionDelete,
+				Name:        "someheadder",
+				Action:      gofastly.HeaderActionDelete,
+				IgnoreIfSet: true,
+				Type:        gofastly.HeaderTypeCache,
+				Destination: "http.aws-id",
+				Priority:    uint(100),
 			},
 			local: map[string]interface{}{
-				"name":   "someheadder",
-				"action": "delete",
+				"name":               "someheadder",
+				"action":             "delete",
+				"ignore_if_set":      true,
+				"destination":        "http.aws-id",
+				"priority":           100,
+				"source":             "",
+				"regex":              "",
+				"substitution":       "",
+				"request_condition":  "",
+				"cache_condition":    "",
+				"response_condition": "",
+				"type":               "cache",
 			},
 		},
-		// {
-		// 	remote: []*gofastly.CreateHeaderInput{
-		// 		&gofastly.CreateHeaderInput{
-		// 			Name: "test.notexample.com",
-		// 		},
-		// 	},
-		// 	local: []map[string]interface{}{
-		// 		map[string]interface{}{
-		// 			"name":    "test.notexample.com",
-		// 			"comment": "",
-		// 		},
-		// 	},
-		// },
+		{
+			remote: &gofastly.CreateHeaderInput{
+				Name:        "someheadder",
+				Action:      gofastly.HeaderActionSet,
+				Type:        gofastly.HeaderTypeCache,
+				Destination: "http.aws-id",
+				Priority:    uint(100),
+				Source:      "http.server-name",
+			},
+			local: map[string]interface{}{
+				"name":               "someheadder",
+				"action":             "set",
+				"ignore_if_set":      false,
+				"destination":        "http.aws-id",
+				"priority":           100,
+				"source":             "http.server-name",
+				"regex":              "",
+				"substitution":       "",
+				"request_condition":  "",
+				"cache_condition":    "",
+				"response_condition": "",
+				"type":               "cache",
+			},
+		},
 	}
 
 	for _, c := range cases {
